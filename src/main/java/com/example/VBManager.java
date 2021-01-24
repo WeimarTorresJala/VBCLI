@@ -5,7 +5,6 @@ import org.virtualbox_6_1.*;
 import java.util.*;
 
 public class VBManager {
-
     private final VirtualBoxManager boxManager;
     private final IVirtualBox vbox;
 
@@ -229,6 +228,7 @@ public class VBManager {
         }
     }
 
+    // Start machine
     public void startMachine(String name) {
         if (!machineExists(name)) {
             System.err.println("The machine doesn't exist");
@@ -256,6 +256,7 @@ public class VBManager {
         }
     }
 
+    // Verify if machine exist
     private boolean machineExists(String machineName) {
         ///VBOX_E_OBJECT_NOT_FOUND
         //kind of "exists"
@@ -274,6 +275,7 @@ public class VBManager {
         return false;
     }
 
+    // Shutdown machine
     public void shutdownMachine(String machineName) {
         if (!machineExists(machineName)) {
             System.err.println("The machine doesn't exist");
@@ -299,5 +301,4 @@ public class VBManager {
             waitToUnlock(session, machine);
         }
     }
-
 }
