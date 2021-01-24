@@ -299,6 +299,11 @@ public class VBManager {
             }
         } finally {
             waitToUnlock(session, machine);
+
+            System.out.println("Machine [" + name + "] shutdown successfully");
+
+            // process system event queue
+            boxManager.waitForEvents(0);
         }
     }
 }
