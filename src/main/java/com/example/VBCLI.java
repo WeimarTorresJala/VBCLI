@@ -8,6 +8,8 @@ public class VBCLI {
         String  password = null;
 
         boolean test = false;
+        boolean start = false;
+        String nameMachine = null;
 
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
@@ -23,6 +25,10 @@ public class VBCLI {
                 case "-t":
                     test = true;
                     break;
+                case "-s":
+                    start = true;
+                    nameMachine = args[++i];
+                    break;
             }
         }
 
@@ -30,6 +36,8 @@ public class VBCLI {
 
         if (test) {
             box.testVB();
+        } else if (start) {
+            box.startMachine(nameMachine);
         }
     }
 

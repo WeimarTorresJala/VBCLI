@@ -2,14 +2,12 @@ package com.example;
 
 import org.virtualbox_6_1.*;
 
-import java.io.IOException;
 import java.util.*;
 
 public class VBManager {
 
     private final VirtualBoxManager boxManager;
     private final IVirtualBox vbox;
-    private IProgress progress;
 
     public VBManager(String url, String user, String password) {
         boxManager = VirtualBoxManager.createInstance(null);
@@ -144,6 +142,17 @@ public class VBManager {
         session.unlockMachine();
         // process system event queue
         boxManager.waitForEvents(0);
+
+//        try {
+//            ArrayList<String> env = new ArrayList<String>();
+//            IProgress progress = machine.launchVMProcess(session, "sdl", null);
+//            wait(progress);
+//        } finally {
+//            session.unlockMachine();
+//
+//            // process system event queue
+//            boxManager.waitForEvents(0);
+//        }
     }
 
     // Test event
@@ -211,8 +220,6 @@ public class VBManager {
 
     // Wait while the progress finish
     private void wait(IProgress progress) {
-        //make this available for the caller
-        this.progress = progress;
         progress.waitForCompletion(-1);
         if (progress.getResultCode() != 0) {
             System.err.println("Operation failed: " + progress.getErrorInfo().getText());
@@ -251,6 +258,45 @@ public class VBManager {
         }
     }
 
+    public void startMachine(String name) {
+        if (!machineExists(name)) {
+            System.err.println("The machine doesn't exist");
+        } else {
+            IMachine machine = vbox.findMachine(name);
 
+            System.out.println("\nAttempting to start VM '" + name + "'\n");
+
+            ISession session = boxManager.getSessionObject();
+            try {
+                ArrayList<String> env = new ArrayList<String>();
+                IProgress progress = machine.launchVMProcess(session, "gui", null);
+                wait(progress);
+            } finally {
+                session.unlockMachine();
+                System.out.println("Machine [" + name + "] start successfully");
+
+                // process system event queue
+                boxManager.waitForEvents(0);
+            }
+        }
+    }
+
+    private boolean machineExists(String machineName) {
+        ///VBOX_E_OBJECT_NOT_FOUND
+        //kind of "exists"
+        if (machineName == null) {
+            return false;
+        }
+        //since the method findMachine returns org.virtualbox_5_2.VBoxExceptio
+        //if the machine doesn't exists we will need to find it by
+        //ourselves iterating over all the machines
+        List<IMachine> machines = vbox.getMachines();
+        for (IMachine machine : machines) {
+            if (machine.getName().equals(machineName)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
 }
