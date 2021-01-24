@@ -25,7 +25,7 @@ public class VBManager {
     public void testVB() {
         try {
             // Version of VBox
-            getVBoxVersion(this.vbox);
+            getVBoxVersion();
             // Test machines
             testEnumeration(this.boxManager, this.vbox);
             // Test log
@@ -62,8 +62,8 @@ public class VBManager {
         this.boxManager.cleanup();
     }
 
-    private void getVBoxVersion(IVirtualBox vbox) {
-        System.out.println("VirtualBox version: " + vbox.getVersion() + "\n");
+    public void getVBoxVersion() {
+        System.out.println("VirtualBox version: " + this.vbox.getVersion());
     }
 
     // For test all machines
@@ -94,7 +94,7 @@ public class VBManager {
                 name = "<inaccessible>";
                 inaccessible = true;
             }
-            System.out.println("VM name: " + name);
+            System.out.println("\nVM name: " + name);
             if (!inaccessible)
             {
                 System.out.println(" RAM size: " + ram + "MB"
@@ -133,26 +133,8 @@ public class VBManager {
     private void testStart(VirtualBoxManager boxManager, IVirtualBox vbox, int nMachine) {
         IMachine m = vbox.getMachines().get(nMachine);
         String name = m.getName();
-        System.out.println("\nAttempting to start VM '" + name + "'\n");
 
-        ISession session = boxManager.getSessionObject();
-        ArrayList<String> env = new ArrayList<String>();
-        IProgress p = m.launchVMProcess(session, "gui", env);
-        wait(p);
-        session.unlockMachine();
-        // process system event queue
-        boxManager.waitForEvents(0);
-
-//        try {
-//            ArrayList<String> env = new ArrayList<String>();
-//            IProgress progress = machine.launchVMProcess(session, "sdl", null);
-//            wait(progress);
-//        } finally {
-//            session.unlockMachine();
-//
-//            // process system event queue
-//            boxManager.waitForEvents(0);
-//        }
+        start(m, name);
     }
 
     // Test event
@@ -203,19 +185,8 @@ public class VBManager {
     private void testShutdown(VirtualBoxManager boxManager, IVirtualBox vbox, int nMachine) {
         IMachine machine = vbox.getMachines().get(nMachine);
         String name = machine.getName();
-        System.out.println("\n\nAttempting to shutdown VM '" + name + "'\n");
 
-        MachineState state = machine.getState();
-        ISession session = boxManager.getSessionObject();
-        machine.lockMachine(session, LockType.Shared);
-        try {
-            if (state.value() >= MachineState.FirstOnline.value() && state.value() <= MachineState.LastOnline.value()) {
-                IProgress progress = session.getConsole().powerDown();
-                wait(progress);
-            }
-        } finally {
-            waitToUnlock(session, machine);
-        }
+        shutdown(name, machine);
     }
 
     // Wait while the progress finish
@@ -264,20 +235,24 @@ public class VBManager {
         } else {
             IMachine machine = vbox.findMachine(name);
 
-            System.out.println("\nAttempting to start VM '" + name + "'\n");
+            start(machine, name);
+        }
+    }
 
-            ISession session = boxManager.getSessionObject();
-            try {
-                ArrayList<String> env = new ArrayList<String>();
-                IProgress progress = machine.launchVMProcess(session, "gui", null);
-                wait(progress);
-            } finally {
-                session.unlockMachine();
-                System.out.println("Machine [" + name + "] start successfully");
+    private void start(IMachine machine, String name) {
+        System.out.println("\nAttempting to start VM '" + name + "'\n");
 
-                // process system event queue
-                boxManager.waitForEvents(0);
-            }
+        ISession session = boxManager.getSessionObject();
+        try {
+            ArrayList<String> env = new ArrayList<String>();
+            IProgress progress = machine.launchVMProcess(session, "gui", null);
+            wait(progress);
+        } finally {
+            session.unlockMachine();
+            System.out.println("Machine [" + name + "] start successfully");
+
+            // process system event queue
+            boxManager.waitForEvents(0);
         }
     }
 
@@ -297,6 +272,32 @@ public class VBManager {
             }
         }
         return false;
+    }
+
+    public void shutdownMachine(String machineName) {
+        if (!machineExists(machineName)) {
+            System.err.println("The machine doesn't exist");
+        } else {
+            IMachine machine = vbox.findMachine(machineName);
+
+            shutdown(machineName, machine);
+        }
+    }
+
+    private void shutdown(String name, IMachine machine) {
+        System.out.println("\n\nAttempting to shutdown VM '" + name + "'\n");
+
+        MachineState state = machine.getState();
+        ISession session = boxManager.getSessionObject();
+        machine.lockMachine(session, LockType.Shared);
+        try {
+            if (state.value() >= MachineState.FirstOnline.value() && state.value() <= MachineState.LastOnline.value()) {
+                IProgress progress = session.getConsole().powerDown();
+                wait(progress);
+            }
+        } finally {
+            waitToUnlock(session, machine);
+        }
     }
 
 }

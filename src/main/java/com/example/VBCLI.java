@@ -6,10 +6,16 @@ public class VBCLI {
         String  url = "http://localhost:18083";
         String  user = null;
         String  password = null;
-
-        boolean test = false;
-        boolean start = false;
         String nameMachine = null;
+
+        // Test variables
+        boolean test = false;
+
+        // Start variables
+        boolean start = false;
+
+        // Shutdown variables
+        boolean shutdown = false;
 
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
@@ -29,6 +35,10 @@ public class VBCLI {
                     start = true;
                     nameMachine = args[++i];
                     break;
+                case "-po":
+                    shutdown = true;
+                    nameMachine = args[++i];
+                    break;
             }
         }
 
@@ -38,6 +48,10 @@ public class VBCLI {
             box.testVB();
         } else if (start) {
             box.startMachine(nameMachine);
+        } else if (shutdown) {
+            box.shutdownMachine(nameMachine);
+        } else {
+            box.getVBoxVersion();
         }
     }
 
