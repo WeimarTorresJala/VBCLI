@@ -15,6 +15,9 @@ public class VBCLI {
         // Test variables
         boolean test = false;
 
+        // List variables
+        boolean list = false;
+
         // Start variables
         boolean start = false;
 
@@ -40,6 +43,9 @@ public class VBCLI {
                     break;
                 case "-t":
                     test = true;
+                    break;
+                case "-l":
+                    list = true;
                     break;
                 case "-s":
                     start = true;
@@ -67,6 +73,8 @@ public class VBCLI {
 
         if (test) {
             box.testVB();
+        } else if (list) {
+            box.list();
         } else if (start) {
             box.startMachine(machineName);
         } else if (shutdown) {

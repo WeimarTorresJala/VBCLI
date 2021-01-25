@@ -228,6 +228,21 @@ public class VBManager {
         }
     }
 
+    // List machines
+    public void list() {
+        for (IMachine machine : vbox.getMachines()) {
+            if (machine.getAccessible()) {
+                System.out.println("Name: " + machine.getName());
+                System.out.println("UUID: " + machine.getId());
+                System.out.println("Config file path: " + machine.getSettingsFilePath());
+                System.out.println("Memory size: " + machine.getMemorySize());
+                System.out.println("Guest OS: " + machine.getOSTypeId() + "\n");
+            } else {
+                System.out.println("Name: <inaccessible>\n");
+            }
+        }
+    }
+
     // Start machine
     public void startMachine(String name) {
         if (!machineExists(name)) {
