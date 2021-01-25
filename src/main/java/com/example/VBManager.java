@@ -133,7 +133,7 @@ public class VBManager {
         IMachine m = vbox.getMachines().get(nMachine);
         String name = m.getName();
 
-        start(m, name);
+        start(boxManager, m, name);
     }
 
     // Test event
@@ -185,7 +185,7 @@ public class VBManager {
         IMachine machine = vbox.getMachines().get(nMachine);
         String name = machine.getName();
 
-        shutdown(name, machine);
+        shutdown(boxManager, name, machine);
     }
 
     // Wait while the progress finish
@@ -235,11 +235,11 @@ public class VBManager {
         } else {
             IMachine machine = vbox.findMachine(name);
 
-            start(machine, name);
+            start(boxManager, machine, name);
         }
     }
 
-    private void start(IMachine machine, String name) {
+    private void start(VirtualBoxManager boxManager, IMachine machine, String name) {
         System.out.println("\nAttempting to start VM '" + name + "'\n");
 
         ISession session = boxManager.getSessionObject();
@@ -276,17 +276,17 @@ public class VBManager {
     }
 
     // Shutdown machine
-    public void shutdownMachine(String machineName) {
-        if (!machineExists(machineName)) {
+    public void shutdownMachine(String nameMachine) {
+        if (!machineExists(nameMachine)) {
             System.err.println("The machine doesn't exist");
         } else {
-            IMachine machine = vbox.findMachine(machineName);
+            IMachine machine = vbox.findMachine(nameMachine);
 
-            shutdown(machineName, machine);
+            shutdown(this.boxManager, nameMachine, machine);
         }
     }
 
-    private void shutdown(String name, IMachine machine) {
+    private void shutdown(VirtualBoxManager boxManager, String name, IMachine machine) {
         System.out.println("\n\nAttempting to shutdown VM '" + name + "'\n");
 
         MachineState state = machine.getState();
@@ -300,10 +300,91 @@ public class VBManager {
         } finally {
             waitToUnlock(session, machine);
 
-            System.out.println("Machine [" + name + "] shutdown successfully");
+            System.out.println("\nMachine [" + name + "] shutdown successfully");
 
             // process system event queue
             boxManager.waitForEvents(0);
+        }
+    }
+
+    // Create a machine
+    public void createMachine(String machineName, String osTypeId, long memory, int hardDiskCapacity, String iso) {
+        if (machineExists(machineName)) {
+            System.err.println("The machine exist");
+        } else {
+            ISession session = null;
+
+            try {
+                // Create a VM
+                IMachine newMachine = this.vbox.createMachine(
+                        null, // Settings file
+                        machineName, // Name
+                        null, // Group
+                        osTypeId, // Os type
+                        "forceOverwrite=1"); // Flags
+
+                // Set memory
+                newMachine.setMemorySize(memory);
+                this.vbox.registerMachine(newMachine);
+
+                session = this.boxManager.getSessionObject();
+                newMachine.lockMachine(session, LockType.Write); // machine is now locked for writing
+                IMachine mutable = session.getMachine(); // obtain the mutable machine copy
+
+                // Set video memory
+                mutable.getGraphicsAdapter().setVRAMSize(16L);
+
+                // Create a medium to ISO file
+                IMedium dvdImage = this.vbox.openMedium(iso,
+                        DeviceType.DVD,
+                        AccessMode.ReadOnly,
+                        false);
+
+                // Add the DVD
+                mutable.addStorageController("IDE Controller", StorageBus.IDE);
+                mutable.attachDevice("IDE Controller",
+                        1,
+                        0,
+                        DeviceType.DVD,
+                        dvdImage);
+                mutable.mountMedium("IDE Controller",
+                        1,
+                        0,
+                        dvdImage,
+                        false);
+
+                // Create a hard disk
+                IMedium hardDisk = this.vbox.createMedium("VDI",
+                        "C:\\Users\\alexa\\VirtualBox VMs\\" + machineName + "\\" + machineName + ".vdi",
+                        AccessMode.ReadWrite,
+                        DeviceType.HardDisk);
+
+                List<MediumVariant> mediumVar = new ArrayList<MediumVariant>();
+                mediumVar.add(MediumVariant.Standard);
+
+                IProgress progress = hardDisk.createBaseStorage((hardDiskCapacity*1024*1024*1024L), mediumVar);
+                wait(progress);
+
+                // Add the hard disk
+                mutable.addStorageController("SATA Controller", StorageBus.SATA);
+                mutable.attachDevice("SATA Controller",
+                        0,
+                        0,
+                        DeviceType.HardDisk,
+                        hardDisk);
+
+                // Final settings
+                mutable.saveSettings();
+                session.unlockMachine();
+            } catch (VBoxException e) {
+                printErrorInfo(e);
+                System.out.println("Java stack trace:");
+                e.printStackTrace();
+
+                if (session != null) {
+                    session.unlockMachine();
+                }
+            }
         }
     }
 }
