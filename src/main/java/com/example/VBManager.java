@@ -423,6 +423,8 @@ public class VBManager {
         try {
             if (state.value() >= MachineState.FirstOnline.value() && state.value() <= MachineState.LastOnline.value()) {
                 shutdownMachine(machineName);
+            } else {
+                waitToUnlock(session, machine);
             }
         } finally {
             System.out.println("Deleting machine " + machineName);

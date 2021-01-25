@@ -65,7 +65,8 @@ public class VBCLI {
                     break;
                 case "-d":
                     delete = true;
-                    machineName = args[i++];
+                    machineName = args[++i];
+                    break;
             }
         }
 
