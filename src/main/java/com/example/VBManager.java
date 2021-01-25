@@ -376,6 +376,11 @@ public class VBManager {
                 // Final settings
                 mutable.saveSettings();
                 session.unlockMachine();
+
+                System.out.println("\nMachine [" + machineName + "] successfully created");
+
+                // process system event queue
+                boxManager.waitForEvents(0);
             } catch (VBoxException e) {
                 printErrorInfo(e);
                 System.out.println("Java stack trace:");
@@ -385,6 +390,30 @@ public class VBManager {
                     session.unlockMachine();
                 }
             }
+        }
+    }
+
+    // Delete a machine
+    public void deleteMachine(String machineName) {
+        if (!machineExists(machineName)) {
+            System.err.println("The machine doesn't exist");
+        }
+        IMachine machine = this.vbox.findMachine(machineName);
+        MachineState state = machine.getState();
+
+        // Get the session
+        ISession session = this.boxManager.getSessionObject();
+        machine.lockMachine(session, LockType.Shared);
+
+        try {
+            if (state.value() >= MachineState.FirstOnline.value() && state.value() <= MachineState.LastOnline.value()) {
+                shutdownMachine(machineName);
+            }
+        } finally {
+            System.out.println("Deleting machine " + machineName);
+            List<IMedium> media = machine.unregister(CleanupMode.DetachAllReturnHardDisksOnly);
+            IProgress progress = machine.deleteConfig(media);
+            wait(progress);
         }
     }
 }

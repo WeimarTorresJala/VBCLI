@@ -6,7 +6,7 @@ public class VBCLI {
         String  url = "http://localhost:18083";
         String  user = null;
         String  password = null;
-        String nameMachine = null;
+        String machineName = null;
         String osType = null;
         long memory = 0;
         int hardDisk = 0;
@@ -24,6 +24,9 @@ public class VBCLI {
         // Create variables
         boolean create = false;
 
+        // Delete variables
+        boolean delete = false;
+
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
                 case "-url":
@@ -40,20 +43,23 @@ public class VBCLI {
                     break;
                 case "-s":
                     start = true;
-                    nameMachine = args[++i];
+                    machineName = args[++i];
                     break;
                 case "-sd":
                     shutdown = true;
-                    nameMachine = args[++i];
+                    machineName = args[++i];
                     break;
                 case "-c":
                     create = true;
-                    nameMachine = args[i + 1];
+                    machineName = args[i + 1];
                     osType = args[i + 2];
                     memory = Long.parseLong(args[i + 3]);
                     hardDisk = Integer.parseInt(args[i + 4]);
                     iso = args[i + 5];
                     break;
+                case "-d":
+                    delete = true;
+                    machineName = args[i++];
             }
         }
 
@@ -62,11 +68,13 @@ public class VBCLI {
         if (test) {
             box.testVB();
         } else if (start) {
-            box.startMachine(nameMachine);
+            box.startMachine(machineName);
         } else if (shutdown) {
-            box.shutdownMachine(nameMachine);
+            box.shutdownMachine(machineName);
         } else if (create) {
-            box.createMachine(nameMachine, osType, memory, hardDisk, iso);
+            box.createMachine(machineName, osType, memory, hardDisk, iso);
+        } else if (delete) {
+            box.deleteMachine(machineName);
         } else {
             box.getVBoxVersion();
         }
