@@ -85,7 +85,7 @@ public class VBCLI {
         } else if (delete) {
             box.deleteMachine(machineName);
         } else {
-            box.getVBoxVersion();
+            System.out.println("Virtual Box CLI, 1.0.0");
         }
     }
 }
